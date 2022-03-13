@@ -20,73 +20,67 @@ class Yanatoon
      */
     private int $size = 32;
 
+    private array $data = [];
+
     private $img;
 
     /**
      * @return Yanatoon
      */
-    public static function random()
-    {
-        $type = self::typeList[array_rand(self::typeList)];
-        $bg = Yanatoon::randomPngFromPath(__DIR__ . '/imgs/background/');
-        $eyes = Yanatoon::randomPngFromPath(__DIR__ . "/imgs/{$type}/eyes/");
-        $face = Yanatoon::randomPngFromPath(__DIR__ . "/imgs/{$type}/face/");
-        $hair = Yanatoon::randomPngFromPath(__DIR__ . "/imgs/{$type}/hair/");
-        $mouth = Yanatoon::randomPngFromPath(__DIR__ . "/imgs/{$type}/mouth/");
-        $clothes = Yanatoon::randomPngFromPath(__DIR__ . "/imgs/{$type}/clothes/");
-
-        return (new Yanatoon($type))->genetate($bg, $eyes, $face, $hair, $mouth, $clothes);
-    }
-
-    public static function randomSize($size)
-    {
-        $type = self::typeList[array_rand(self::typeList)];
-        $bg = Yanatoon::randomPngFromPath(__DIR__ . '/imgs/background/');
-        $eyes = Yanatoon::randomPngFromPath(__DIR__ . "/imgs/{$type}/eyes/");
-        $face = Yanatoon::randomPngFromPath(__DIR__ . "/imgs/{$type}/face/");
-        $hair = Yanatoon::randomPngFromPath(__DIR__ . "/imgs/{$type}/hair/");
-        $mouth = Yanatoon::randomPngFromPath(__DIR__ . "/imgs/{$type}/mouth/");
-        $clothes = Yanatoon::randomPngFromPath(__DIR__ . "/imgs/{$type}/clothes/");
-
-        return (new Yanatoon($type, $size))->genetate($bg, $eyes, $face, $hair, $mouth, $clothes);
-    }
-
-    public function __construct(string $type = '', int $size = 32)
-    {
-        $this->setType($type);
-        $this->setSize($size);
-    }
-
-    public function setSize(int $size = 32): bool
-    {
-        if(!is_numeric($size) || $size > 1024){
-            return false;
-        }
-
-        $this->size = $size;
-        return true;
-    }
-
-    public function setType(string $type): bool
+    public static function make($size = 32, $type = 'random', $data = []): Yanatoon
     {
         if(array_search($type, self::typeList) === false){
-            return false;
+            $type = self::typeList[array_rand(self::typeList)];
         }
 
-        $this->type = $type;
-        return true;
+        return (new Yanatoon())->setType($type)->setSize($size)->setData($data)->generate();
     }
 
-    public function genetate($bgPath, $eyesPath, $facePath, $hairPath, $mouthPath, $clothesPath)
+    public function __construct(string $type = '', int $size = 32, array $data = [])
+    {
+        $this->setType($type)
+            ->setData($data)
+            ->setSize($size);
+    }
+
+    public function setSize(int $size = 32): Yanatoon
+    {
+        if(is_numeric($size) || $size <= 1024){
+            $this->size = $size;
+        }
+
+
+        return $this;
+    }
+
+    public function setData(array $data = []): Yanatoon
+    {
+        $this->data = $data;
+        return $this;
+    }
+
+    public function setType(string $type): Yanatoon
+    {
+        if(array_search($type, self::typeList)){
+            $this->type = $type;
+        }
+        return $this;
+    }
+
+    public function generate(): Yanatoon
     {
         $this->img = imagecreatetruecolor( $this->size, $this->size );
 
-        $this->drawElement($bgPath);
-        $this->drawElement($facePath);
-        $this->drawElement($eyesPath);
-        $this->drawElement($hairPath);
-        $this->drawElement($mouthPath);
-        $this->drawElement($clothesPath);
+        $this->dataFormatter();
+
+        ['bg' => $bg, 'eyes' => $eyes, 'face' => $face, 'hair' => $hair, 'mouth' => $mouth, 'clothes' => $clothes] = $this->data;
+
+        $this->drawElement(__DIR__ . "/imgs/background/{$bg}.png");
+        $this->drawElement(__DIR__ . "/imgs/{$this->type}/face/{$face}.png");
+        $this->drawElement(__DIR__ . "/imgs/{$this->type}/clothes/{$clothes}.png");
+        $this->drawElement(__DIR__ . "/imgs/{$this->type}/eyes/{$eyes}.png");
+        $this->drawElement(__DIR__ . "/imgs/{$this->type}/hair/{$hair}.png");
+        $this->drawElement(__DIR__ . "/imgs/{$this->type}/mouth/{$mouth}.png");
 
         return $this;
     }
@@ -108,11 +102,34 @@ class Yanatoon
         imagecopyresized( $this->img, $imagePart, 0, 0, 0, 0, $this->size, $this->size, imagesx($imagePart), imagesy( $imagePart ) );
     }
 
+    private function dataFormatter(){
+        $list = ['bg', 'eyes', 'face', 'hair', 'mouth', 'clothes'];
+
+        $newData = [];
+        $data = $this->data;
+
+        foreach ($list as $el) {
+            if(array_key_exists($el, $data) === false) {
+                if($el === 'bg'){
+                    $newData['bg'] = Yanatoon::randomPngFromPath(__DIR__ . '/imgs/background/');
+                    continue;
+                }
+
+                $newData[$el] = Yanatoon::randomPngFromPath(__DIR__ . "/imgs/{$this->type}/{$el}/");
+            } else {
+                $newData[$el] = $data[$el];
+            }
+        }
+
+        $this->data = $newData;
+    }
+
     private static function randomPngFromPath(string $path){
         $parts = glob( $path . '*.png' );
         shuffle( $parts );
-
-        return $parts[0];
+        //return $parts[0];
+        $filename = explode('/', $parts[0]);
+        return str_replace('.png', '', $filename[count($filename) - 1]);
     }
 
     public static function setContentType()

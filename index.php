@@ -9,4 +9,4 @@ ini_set('display_startup_errors', 1);
 
 //print_r(glob("./src/imgs/background/*.png"));
 Yanatoon::setContentType();
-Yanatoon::randomSize(512)->printImage();
+Yanatoon::make(800)->printImage();

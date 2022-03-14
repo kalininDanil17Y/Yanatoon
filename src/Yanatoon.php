@@ -23,6 +23,8 @@ class Yanatoon
     private array $data = [];
 
     private $img;
+    
+    private $error = false;
 
     /**
      * @return Yanatoon
@@ -81,6 +83,10 @@ class Yanatoon
         $this->drawElement(__DIR__ . "/imgs/{$this->type}/eyes/{$eyes}.png");
         $this->drawElement(__DIR__ . "/imgs/{$this->type}/hair/{$hair}.png");
         $this->drawElement(__DIR__ . "/imgs/{$this->type}/mouth/{$mouth}.png");
+        
+        if($this->error){
+            throw new \Exception('Ошибка наложения');
+        }
 
         return $this;
     }
@@ -102,6 +108,10 @@ class Yanatoon
     }
 
     private function drawElement($path) {
+        if(!file_exists($path)) {
+            $this->error = true;
+            return;
+        }
         $imagePart = imagecreatefrompng( $path );
         imagecopyresized( $this->img, $imagePart, 0, 0, 0, 0, $this->size, $this->size, imagesx($imagePart), imagesy( $imagePart ) );
     }

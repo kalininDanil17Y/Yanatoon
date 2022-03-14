@@ -68,6 +68,11 @@ class Yanatoon
         }
         return $this;
     }
+    
+    public function getType()
+    {
+        return $this->type;
+    }
 
     public function generate(): Yanatoon
     {

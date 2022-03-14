@@ -92,6 +92,10 @@ class Yanatoon
     public function printImage(){
         imagepng($this->img);
     }
+    
+    public function getData(){
+        return $this->data;
+    }
 
     public function save($path){
         imagepng($this->img, $path);
